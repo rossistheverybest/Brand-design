@@ -27,11 +27,13 @@ export async function renderJpeg(r: RenderRequest): Promise<Buffer> {
   const box = photoBox(r.layout, r.aspect);
   const photo = r.photo && box ? await cropToBox(r.photo, box.width, box.height, r.focal) : undefined;
   const logo = r.logo ? `data:image/png;base64,${r.logo.toString("base64")}` : undefined;
+  const lm = r.logo ? await sharp(r.logo).metadata() : undefined;
+  const logoAspect = lm?.width && lm.height ? lm.width / lm.height : undefined;
 
   const svg = await satori(
     createElement(Template, {
       kit: r.kit, brandName: r.brandName, aspect: r.aspect, layout: r.layout,
-      overlay: r.overlay, photo, logo, credit: r.credit, slide: r.slide,
+      overlay: r.overlay, photo, logo, logoAspect, credit: r.credit, slide: r.slide,
     }),
     { width, height, fonts: await fontsFor(r.kit) },
   );

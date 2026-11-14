@@ -28,6 +28,7 @@ export interface TemplateInput {
   overlay: Overlay;
   photo?: string;     // data URI already cropped to the photo box
   logo?: string;      // data URI
+  logoAspect?: number; // width / height, so every logo gets the same visual weight
   credit?: string;
   slide?: { index: number; count: number };
 }
@@ -49,23 +50,34 @@ export function Template(p: TemplateInput) {
   const c = p.kit.colors;
   const head = (s?: string) => (s && p.kit.headlineCase === "upper" ? s.toUpperCase() : s);
 
-  const logo = (onDark: boolean, size = 54): ReactNode =>
-    p.logo ? (
-      <img src={p.logo} height={size} style={{ height: size, objectFit: "contain" }} />
-    ) : (
+  // size is the nominal height for a ~3:1 logo; wide logos get shorter, compact ones taller.
+  const logo = (onDark: boolean, size = 54): ReactNode => {
+    if (p.logo) {
+      const ar = p.logoAspect ?? 3;
+      const h = Math.round(Math.min(size * 1.7, Math.max(size * 0.8, Math.sqrt((size * size * 3 * 1.6) / ar))));
+      return <img src={p.logo} width={Math.round(h * ar)} height={h} />;
+    }
+    return (
       <div style={{ fontFamily: "Display", fontSize: size * 0.72, letterSpacing: 2, color: onDark ? c.paper : c.ink, textTransform: "uppercase" }}>
         {p.brandName}
       </div>
     );
+  };
 
-  // On the end card the background is already the primary colour, so invert the pill.
-  const pillBg = p.layout === "endcard" ? c.paper : undefined;
-  const ctaPill = (onDark: boolean) =>
-    p.overlay.cta ? (
-      <div style={{ display: "flex", alignSelf: "flex-start", marginTop: 28, padding: "16px 30px", borderRadius: 999, background: pillBg ?? (onDark ? c.primary : c.ink), color: pillBg ? c.primary : c.paper, fontFamily: "Body", fontWeight: 600, fontSize: 32 }}>
+  // Button colours: never let the pill disappear into what's behind it.
+  // On dark (photo gradient / end card): use the primary colour if it is light enough, else white.
+  // On light (band panel): use ink.
+  const darkPrimary = luminance(c.primary) < 0.35;
+  const ctaPill = (onDark: boolean) => {
+    if (!p.overlay.cta) return null;
+    const bg = onDark ? (darkPrimary || p.layout === "endcard" ? c.paper : c.primary) : c.ink;
+    const fg = luminance(bg) > 0.5 ? c.ink : c.paper;
+    return (
+      <div style={{ display: "flex", alignSelf: "flex-start", marginTop: 28, padding: "16px 30px", borderRadius: 999, background: bg, color: fg, fontFamily: "Body", fontWeight: 600, fontSize: 32 }}>
         {p.overlay.cta}
       </div>
-    ) : null;
+    );
+  };
 
   const counter = p.slide && p.slide.count > 1 ? (
     <div style={{ position: "absolute", top: safeTop, right: pad, fontFamily: "Body", fontWeight: 600, fontSize: 26, color: c.paper, background: "rgba(0,0,0,.35)", padding: "6px 14px", borderRadius: 999 }}>
@@ -83,7 +95,7 @@ export function Template(p: TemplateInput) {
   const textBlock = (onDark: boolean, size: number) => (
     <div style={{ display: "flex", flexDirection: "column" }}>
       {p.overlay.eyebrow ? (
-        <div style={{ fontFamily: "Body", fontWeight: 600, fontSize: 28, letterSpacing: 4, textTransform: "uppercase", color: onDark ? c.accent : c.primary, marginBottom: 14 }}>
+        <div style={{ fontFamily: "Body", fontWeight: 600, fontSize: 28, letterSpacing: 4, textTransform: "uppercase", color: onDark ? c.accent : c.primary, opacity: 0.85, marginBottom: 14 }}>
           {p.overlay.eyebrow}
         </div>
       ) : null}
@@ -154,6 +166,12 @@ function fitHeadline(text: string, max: number) {
   if (n <= 28) return Math.round(max * 0.85);
   if (n <= 40) return Math.round(max * 0.72);
   return Math.round(max * 0.6);
+}
+
+function luminance(hex: string) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map((x) => x + x).join("") : h, 16);
+  return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
 }
 
 function hexA(hex: string, a: number) {

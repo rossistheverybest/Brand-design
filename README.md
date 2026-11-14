@@ -9,7 +9,7 @@ Turns marketing-calendar items and your photos into consistent, on-brand Meta co
 <img src="docs/samples/corvus-overlay-9x16.jpg" width="128" alt="Corvus story">
 </p>
 
-*(Rendered with a placeholder photo and the placeholder brand colours. Swap in the real logos and colours on the Brands page.)*
+*(Placeholder photo. All brands use a black-and-white palette and their own logo from `assets/logos`.)*
 
 ## How it works
 
@@ -47,6 +47,7 @@ Calendar item ──► drop photos ──► Claude plans ──► templates r
 src/lib/brand.ts           brand kit type + defaults for altus / corvus / winterstoke
 src/lib/formats.ts         Meta sizes, story safe zones, copy limits, item → placements
 src/lib/copy.ts            Claude call (vision + structured output) → creative plan
+assets/logos/              white + black logo per brand
 src/lib/render/            Satori templates → PNG → JPEG; focal-point photo cropping
 src/lib/generate.ts        item + photos → plan → rendered creatives in storage
 src/lib/meta/              Graph API: IG/FB publishing, paused ads with per-placement images
@@ -79,7 +80,7 @@ npm run dev                  # http://localhost:3000
 Deploy to Vercel with the same env vars. `vercel.json` runs `/api/cron/publish` every 15 minutes to publish approved items at their time (the brand's default publish time on the item's date, or the item's own "publish at"). A 15-minute cron needs a paid Vercel plan; on Hobby, change it to daily or use "Publish now".
 
 ### 4. Brand kits
-On **Brands**, set the exact colours and upload a white/light PNG logo for each brand. Fonts come from `@fontsource` packages so rendering never fetches anything over the network. To use a different typeface, `npm i @fontsource/<family>` and add it to `src/lib/render/fonts.ts`.
+All three brands are black and white. Logos come from `assets/logos/<brand>-white.png` (used on photos and dark backgrounds) and `-black.png`; these were made from the PNGs in Drive. Uploading a logo on **Brands** overrides the file. The Altus and Corvus PNGs are small (170 px and 160 px wide), so a larger export or SVG-to-PNG would make them sharper. Fonts come from `@fontsource` packages so rendering never fetches anything over the network. To use a different typeface, `npm i @fontsource/<family>` and add it to `src/lib/render/fonts.ts`.
 
 ## Day to day
 1. Open the calendar → click an item (or **New item**).

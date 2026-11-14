@@ -24,7 +24,8 @@ async function main() {
   for (const [id, { name, kit }] of Object.entries(DEFAULT_KITS)) {
     for (const layout of Object.keys(LAYOUTS) as LayoutId[]) {
       for (const aspect of ["4:5", "9:16"] as Aspect[]) {
-        const jpg = await renderJpeg({ kit, brandName: name, aspect, layout, overlay, photo, credit: "@photographer", slide: layout === "band" ? { index: 1, count: 5 } : undefined });
+        const logo = await readFile(`assets/logos/${id}-white.png`).catch(() => undefined);
+        const jpg = await renderJpeg({ kit, brandName: name, logo, aspect, layout, overlay, photo, credit: "@photographer", slide: layout === "band" ? { index: 1, count: 5 } : undefined });
         const file = `samples/${id}-${layout}-${aspect.replace(":", "x")}.jpg`;
         await writeFile(file, jpg);
         console.log(file);

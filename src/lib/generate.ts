@@ -5,7 +5,7 @@ import { placementsFor, type Aspect, type Placement } from "./formats";
 import { renderJpeg } from "./render";
 import { previewForModel } from "./render/photo";
 import type { LayoutId, Overlay } from "./render/templates";
-import type { Brand } from "./brand";
+import { brandLogo, type Brand } from "./brand-assets";
 
 export interface SlideRecord {
   photo_id: string | null;
@@ -108,7 +108,7 @@ export async function renderCreative(
 ) {
   const sb = db();
   brand ??= await getBrand((await sb.from("calendar_items").select("brand_id").eq("id", c.item_id).single()).data!.brand_id);
-  const logo = brand.kit.logo.light ? await download(brand.kit.logo.light).catch(() => undefined) : undefined;
+  const logo = await brandLogo(brand);
   const cache = photoCache ?? new Map();
   const stamp = Date.now();
 

@@ -68,14 +68,14 @@ const shared = {
   logo: {},
 };
 
-// Colours are taken from the current marketing calendar. Replace them with the
-// exact values from each brand guide on the Brands page.
+// All three brands use a black-and-white palette; the logo, voice and rules are
+// what tell them apart. Logos live in assets/logos (white + black versions).
 export const DEFAULT_KITS: Record<string, { name: string; kit: BrandKit }> = {
   altus: {
     name: "Altus Mountain Guides",
     kit: {
       ...shared,
-      colors: { primary: "#3e6a8f", accent: "#8db7da", ink: "#16191c", paper: "#f3f4f5", overlay: "#0b1620" },
+      colors: { primary: "#111111", accent: "#ffffff", ink: "#111111", paper: "#ffffff", overlay: "#000000" },
       voice:
         "Certified IFMGA/ACMG mountain guides. Calm, expert, warm. Plain words, short sentences, specific details (routes, huts, dates). Safety-first without fear. No hype, no exclamation stacks, at most one emoji.",
       rules: [
@@ -94,7 +94,7 @@ export const DEFAULT_KITS: Record<string, { name: string; kit: BrandKit }> = {
     name: "Corvus Snowboarding",
     kit: {
       ...shared,
-      colors: { primary: "#b8914a", accent: "#dab573", ink: "#141414", paper: "#f6efe2", overlay: "#0f0d09" },
+      colors: { primary: "#111111", accent: "#ffffff", ink: "#111111", paper: "#ffffff", overlay: "#000000" },
       voice:
         "Splitboard specialists, by snowboarders for snowboarders. Lower-case friendly headline phrasing is fine (e.g. 'your crew. your dates.'). Direct, a little playful, technical when it matters.",
       rules: [
@@ -113,7 +113,7 @@ export const DEFAULT_KITS: Record<string, { name: string; kit: BrandKit }> = {
     name: "Winterstoke",
     kit: {
       ...shared,
-      colors: { primary: "#c8792b", accent: "#ffb86b", ink: "#1a120a", paper: "#fbeedf", overlay: "#1a0f05" },
+      colors: { primary: "#111111", accent: "#ffffff", ink: "#111111", paper: "#ffffff", overlay: "#000000" },
       voice:
         "Community backcountry festival in Squamish. Energetic, welcoming, local. Event details first: what, where, when, price.",
       rules: [
