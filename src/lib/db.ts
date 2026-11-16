@@ -1,4 +1,5 @@
-import "server-only";
+// Server code shared by Next route handlers and the background worker (netlify/functions).
+// Never import this from a client component: it uses the Supabase secret key.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { withDefaults, type Brand } from "./brand";
 

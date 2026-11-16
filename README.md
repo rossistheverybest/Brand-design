@@ -51,7 +51,11 @@ assets/logos/              white + black logo per brand
 src/lib/render/            Satori templates → PNG → JPEG; focal-point photo cropping
 src/lib/generate.ts        item + photos → plan → rendered creatives in storage
 src/lib/meta/              Graph API: IG/FB publishing, paused ads with per-placement images
-src/lib/publishing.ts      approval-gated publish + scheduled publishing
+src/lib/publishing.ts      approval-gated publish
+src/lib/jobs.ts            background jobs (generate, re-render, publish, touch-up, learn) + scheduler
+src/lib/learning.ts        feedback capture, history for prompts, rule suggestions
+src/lib/touchup.ts         OpenAI photo extension for stories
+netlify/functions/         background worker + 15-minute scheduler
 src/app/                   calendar, item workspace, brand kits, API routes
 supabase/migrations/       schema (RLS on, server-only access)
 supabase/seed.sql          brands + the 92 items / 10 week themes from the calendar artifact
@@ -71,13 +75,14 @@ data/artifact-calendar.ts  the artifact's calendar data, copied for the import
 3. Put the token in `META_SYSTEM_USER_TOKEN`. On the **Brands** page, fill in each brand's Page id, Instagram user id, ad account id and (optionally) a default ad set id.
 4. Ads go into an **existing** ad set (where you set budget, schedule and audience in Ads Manager). Set it per item, or use the brand default.
 
-### 3. Environment and deploy
-```bash
-cp .env.example .env.local   # fill in
-npm install
-npm run dev                  # http://localhost:3000
-```
-Deploy to Vercel with the same env vars. `vercel.json` runs `/api/cron/publish` every 15 minutes to publish approved items at their time (the brand's default publish time on the item's date, or the item's own "publish at"). A 15-minute cron needs a paid Vercel plan; on Hobby, change it to daily or use "Publish now".
+### 3. Deploy (Netlify)
+1. New site from this GitHub repo. `netlify.toml` sets the build, and Netlify's Next.js support is detected automatically.
+2. Site settings → Environment variables: add everything from `.env.example`, including `JOB_RUNNER=netlify`, `SITE_URL`, and long random values for `JOB_SECRET`.
+3. In Supabase Auth → URL configuration, set the Site URL and add `https://<site>/auth/callback`.
+
+**Why background jobs:** making a post (Claude + rendering) or publishing a carousel can take up to a minute, which is longer than a normal web request should wait. The page queues a job and checks on it every couple of seconds, and the work runs in `netlify/functions/worker-background.mts`. `netlify/functions/publish-due.mts` runs every 15 minutes and queues approved posts whose time has come.
+
+Local development: `cp .env.example .env.local`, remove `JOB_RUNNER`, then `npm install && npm run dev`. Jobs run in-process.
 
 ### 4. Brand kits
 All three brands are black and white. Logos come from `assets/logos/<brand>-white.png` (used on photos and dark backgrounds) and `-black.png`; these were made from the PNGs in Drive. Uploading a logo on **Brands** overrides the file. The Altus and Corvus PNGs are small (170 px and 160 px wide), so a larger export or SVG-to-PNG would make them sharper. Fonts come from `@fontsource` packages so rendering never fetches anything over the network. To use a different typeface, `npm i @fontsource/<family>` and add it to `src/lib/render/fonts.ts`.
@@ -89,6 +94,17 @@ All three brands are black and white. Logos come from `assets/logos/<brand>-whit
 4. **Generate** → review the slides, caption and ad copy. Read any **Check before approving** notes and photo warnings.
 5. Tweak the on-image text, layout or photo per slide (re-renders in a few seconds), or edit the caption.
 6. **Approve** each creative. Organic posts publish automatically on the date; use **Publish now** to post right away, and **Create paused ad** for ads.
+
+## Learning from your reviews
+Claude isn't retrained. Instead, every review is recorded and fed back into the next request for that brand:
+
+- **Approved as-is**: becomes a style example (same pillar first).
+- **Approved after edits**: Claude's version is kept next to yours, and the before → after changes ("headline: X → Y") are shown to Claude next time.
+- **Rejected**: you give a one-line reason, and Claude is told to avoid it.
+- **Suggested rules**: on the Brands page, "Suggest rules" reads the recent reviews and proposes house-style rules (e.g. "Keep on-image headlines to 5 words"). You edit, accept or dismiss each one. Accepted rules join the brand's hard rules. Nothing is added without you.
+
+## Photo touch-ups (OpenAI)
+On a wide photo, **Extend for stories (AI)** creates a 9:16 version by generating more sky and snow above and below it. The real photo is pasted back over the middle at full quality, so only the added bands are AI-made. That version is used only for story-shaped images, it's marked "AI-extended" in the workspace, and **Undo** returns to normal cropping. The prompt forbids adding people, skiers, text or objects. Look at it before approving. Meta may ask for an "AI info" label on ads that use edited images.
 
 ## Calendar views
 The calendar has **Month**, **Week** and **Day** views and a business switcher (**All / Altus / Corvus / Winterstoke**). Each view shows a per-business tally for the period:

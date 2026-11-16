@@ -5,8 +5,11 @@ import { META_CTAS, type Brand } from "./brand";
 import { LIMITS, type Placement } from "./formats";
 import { LAYOUTS } from "./render/templates";
 
-const MODEL = "claude-opus-5-5";
-const client = new Anthropic();
+export const MODEL = "claude-opus-5-5";
+// Created on first use so code paths that don't need Claude (publishing) still
+// work when the key is missing.
+let _client: Anthropic | null = null;
+export const claude = () => (_client ??= new Anthropic());
 
 const LayoutEnum = z.enum(Object.keys(LAYOUTS) as [keyof typeof LAYOUTS, ...(keyof typeof LAYOUTS)[]]);
 
@@ -61,6 +64,8 @@ export interface PlanInput {
   photos: { data: string; width: number; height: number; credit: string | null }[];
   /** Free-text direction from the reviewer when regenerating. */
   direction?: string | null;
+  /** What past reviews taught us about this brand (see learning.ts). */
+  learning?: string | null;
 }
 
 function systemPrompt(brand: Brand) {
@@ -100,7 +105,8 @@ export async function planCreatives(input: PlanInput): Promise<Plan> {
     input.weekTheme ? `This week's theme: ${input.weekTheme.theme}${input.weekTheme.goal ? ` (goal: ${input.weekTheme.goal})` : ""}` : null,
     `Make: ${placements.join(", ")}. Return null for anything not listed.`,
     item.format === "carousel" ? "The feed post is a carousel." : "The feed post is a single image unless the brief asks for a carousel.",
-    input.direction ? `Reviewer direction for this version: ${input.direction}` : null,
+    input.learning ? `\n${input.learning}\n` : null,
+    input.direction ? `Reviewer direction for this version (overrides the history above): ${input.direction}` : null,
     `${input.photos.length} photo(s) follow, in order, indexed from 0.`,
   ].filter(Boolean).join("\n");
 
@@ -110,7 +116,7 @@ export async function planCreatives(input: PlanInput): Promise<Plan> {
     content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: p.data } });
   });
 
-  const response = await client.messages.parse({
+  const response = await claude().messages.parse({
     model: MODEL,
     max_tokens: 16000,
     system: [{ type: "text", text: systemPrompt(input.brand), cache_control: { type: "ephemeral" } }],

@@ -1,6 +1,4 @@
-import "server-only";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readAppFile } from "./files";
 import { download } from "./db";
 import type { Brand } from "./brand";
 export type { Brand } from "./brand";
@@ -11,5 +9,5 @@ export async function brandLogo(brand: Brand): Promise<Buffer | undefined> {
     const up = await download(brand.kit.logo.light).catch(() => undefined);
     if (up) return up;
   }
-  return readFile(path.join(process.cwd(), "assets", "logos", `${brand.id}-white.png`)).catch(() => undefined);
+  return readAppFile(`assets/logos/${brand.id}-white.png`).catch(() => undefined);
 }

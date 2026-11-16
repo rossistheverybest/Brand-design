@@ -1,5 +1,4 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readAppFile } from "../files";
 import type { BrandKit } from "../brand";
 
 // Satori needs raw font files (ttf/otf/woff, not woff2). Fonts come from
@@ -17,8 +16,7 @@ async function load(family: string, weight: number): Promise<Buffer> {
   const entry = REGISTRY[family] ?? REGISTRY["Source Sans 3"];
   const key = `${entry.slug}-${weight}`;
   if (!cache.has(key)) {
-    const file = path.join(process.cwd(), "node_modules", entry.pkg, "files", `${entry.slug}-latin-${weight}-normal.woff`);
-    cache.set(key, await readFile(file));
+    cache.set(key, await readAppFile(`node_modules/${entry.pkg}/files/${entry.slug}-latin-${weight}-normal.woff`));
   }
   return cache.get(key)!;
 }

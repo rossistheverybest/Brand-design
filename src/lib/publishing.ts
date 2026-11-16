@@ -1,4 +1,3 @@
-import "server-only";
 import { db, download, getBrand, log, signedUrl } from "./db";
 import type { CreativeRecord } from "./generate";
 import { createPausedAd } from "./meta/ads";
@@ -77,25 +76,6 @@ async function buildCaption(c: CreativeRecord) {
     credits = [...new Set((data ?? []).map((p) => p.credit).filter(Boolean))];
   }
   return [caption, credits.length ? `📷 ${credits.join(", ")}` : "", tags.join(" ")].filter(Boolean).join("\n\n");
-}
-
-/** Called by the cron route: publish approved organic creatives whose time has come. */
-export async function publishDue() {
-  const sb = db();
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: items } = await sb.from("calendar_items").select("*").eq("status", "approved").lte("date", today);
-  const results: { item: string; creative: string; ok: boolean; error?: string }[] = [];
-  for (const item of items ?? []) {
-    const brand = await getBrand(item.brand_id);
-    const due = item.publish_at ? new Date(item.publish_at) : zonedTime(item.date, brand.kit.defaultPublishTime, brand.kit.timezone);
-    if (due > new Date()) continue;
-    const { data: creatives } = await sb.from("creatives").select("id").eq("item_id", item.id).eq("status", "approved").neq("placement", "ad");
-    for (const c of creatives ?? []) {
-      try { await publishCreative(c.id, "scheduler"); results.push({ item: item.id, creative: c.id, ok: true }); }
-      catch (e) { results.push({ item: item.id, creative: c.id, ok: false, error: e instanceof Error ? e.message : String(e) }); }
-    }
-  }
-  return results;
 }
 
 /** "2026-11-20" + "08:30" in America/Vancouver -> UTC Date. */

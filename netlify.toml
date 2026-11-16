@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  node_bundler = "esbuild"
+  # Native image libraries are installed, not bundled.
+  external_node_modules = ["sharp", "@resvg/resvg-js"]
+  # Fonts and logos are read from disk while rendering.
+  included_files = [
+    "node_modules/@fontsource/barlow-condensed/files/*-normal.woff",
+    "node_modules/@fontsource/source-sans-3/files/*-normal.woff",
+    "assets/logos/*.png",
+  ]

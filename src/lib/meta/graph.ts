@@ -1,4 +1,3 @@
-import "server-only";
 
 // Minimal Meta Graph API client. Auth is a System User token from Business
 // Settings; Facebook Page calls exchange it for that Page's token.

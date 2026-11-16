@@ -1,4 +1,3 @@
-import "server-only";
 import { graph, pageToken, MetaError } from "./graph";
 
 // Organic publishing. Image URLs must be publicly fetchable for a few minutes

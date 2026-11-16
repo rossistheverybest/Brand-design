@@ -1,9 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { api, uploadFile } from "@/lib/supabase-browser";
+import { api, runJob, uploadFile } from "@/lib/supabase-browser";
 
-interface PhotoView { id: string; url: string; credit: string | null; warnings: string[]; subject?: string }
+interface PhotoView {
+  id: string; url: string; credit: string | null; warnings: string[]; subject?: string;
+  width: number | null; height: number | null; storyUrl: string | null; storyAi: boolean;
+}
 interface Overlay { eyebrow?: string; headline?: string; body?: string; cta?: string }
 interface Slide { photo_id: string | null; layout: string; overlay: Overlay; aspect: string; image_path?: string }
 interface CreativeView {
@@ -73,6 +76,19 @@ export function Workspace(props: {
                 <img src={p.url} alt={p.subject ?? ""} />
                 {p.credit && <span className="muted">Photo: {p.credit}</span>}
                 {p.warnings.map((w) => <span key={w} className="flag">● {w}</span>)}
+                {p.storyUrl ? (
+                  <span className="row" style={{ gap: 6 }}>
+                    <a href={p.storyUrl} target="_blank" rel="noreferrer"><img src={p.storyUrl} alt="Story version" style={{ width: 36, aspectRatio: "9 / 16", objectFit: "cover", borderRadius: 3 }} /></a>
+                    <span className="aibadge" title="Top and bottom were extended with AI; the middle is the real photo.">AI-extended for stories</span>
+                    <button style={{ padding: "2px 8px" }} disabled={!!busy} onClick={() => run("undo-ext", () => api(`/api/photos/${p.id}/extend`, "DELETE"))}>Undo</button>
+                  </span>
+                ) : p.width && p.height && p.width / p.height > 0.6 ? (
+                  <button style={{ justifySelf: "start", padding: "2px 10px" }} disabled={!!busy}
+                    title="Uses AI to extend the sky and snow above and below this photo so stories show the whole shot instead of a tight crop. You approve the result like everything else."
+                    onClick={() => run(`ext-${p.id}`, () => runJob(`/api/photos/${p.id}/extend`, "POST"))}>
+                    {busy === `ext-${p.id}` ? "Extending…" : "Extend for stories (AI)"}
+                  </button>
+                ) : null}
                 <button className="danger" style={{ justifySelf: "start", padding: "2px 10px" }} onClick={() => run("rm", () => api(`/api/photos/${p.id}`, "DELETE"))}>Remove</button>
               </div>
             ))}
@@ -80,10 +96,10 @@ export function Workspace(props: {
         )}
         <label>Direction for Claude (optional): “use the summit shot as the cover”, “make it a 5-slide carousel”<input value={direction} onChange={(e) => setDirection(e.target.value)} /></label>
         <div className="row">
-          <button className="primary" disabled={!!busy || !props.photos.length} onClick={() => run("gen", () => api(`/api/items/${props.itemId}/generate`, "POST", { direction }))}>
+          <button className="primary" disabled={!!busy || !props.photos.length} onClick={() => run("gen", () => runJob(`/api/items/${props.itemId}/generate`, "POST", { direction }))}>
             {busy === "gen" ? "Designing… (up to a minute)" : props.creatives.length ? "Regenerate drafts" : "Generate"}
           </button>
-          {props.creatives.length > 0 && <span className="muted" style={{ fontSize: 13 }}>Regenerating replaces drafts only. Approved and published creatives stay.</span>}
+          {props.creatives.length > 0 && <span className="muted" style={{ fontSize: 13 }}>Regenerating replaces drafts only. Approved and published creatives stay. Your past edits and rejections are taken into account.</span>}
         </div>
         {err && <pre className="err">{err}</pre>}
       </section>
@@ -175,17 +191,21 @@ function CreativeCard({ c, photos, busy, run, adReady }: {
 
       {!locked && (
         <div className="row">
-          <button disabled={!!busy} onClick={() => run(`save-${c.id}`, () => api(`/api/creatives/${c.id}`, "PATCH", editing ? { slides, copy } : { copy }))}>
+          <button disabled={!!busy} onClick={() => run(`save-${c.id}`, () => runJob(`/api/creatives/${c.id}`, "PATCH", editing ? { slides, copy } : { copy }))}>
             {busy === `save-${c.id}` ? "Saving…" : editing ? "Save and re-render" : "Save copy"}
           </button>
           {c.status !== "approved"
             ? <button className="ok" disabled={!!busy} onClick={() => run(`ap-${c.id}`, () => api(`/api/creatives/${c.id}/review`, "POST", { decision: "approved" }))}>Approve</button>
             : <button disabled={!!busy} onClick={() => run(`un-${c.id}`, () => api(`/api/creatives/${c.id}/review`, "POST", { decision: "draft" }))}>Unapprove</button>}
-          {c.status === "draft" && <button className="danger" disabled={!!busy} onClick={() => run(`rj-${c.id}`, () => api(`/api/creatives/${c.id}/review`, "POST", { decision: "rejected" }))}>Reject</button>}
+          {c.status === "draft" && <button className="danger" disabled={!!busy} onClick={() => {
+            const reason = prompt("Why are you rejecting this? (One line. It helps future drafts.)");
+            if (reason === null) return;
+            run(`rj-${c.id}`, () => api(`/api/creatives/${c.id}/review`, "POST", { decision: "rejected", reason }));
+          }}>Reject</button>}
           {c.status === "approved" && (
             <button className="primary" disabled={!!busy || (c.placement === "ad" && !adReady)}
               title={c.placement === "ad" && !adReady ? "Set an ad set on this item or a default for the brand" : undefined}
-              onClick={() => confirm(c.placement === "ad" ? "Create this ad (paused) in Ads Manager?" : "Publish to Meta now?") && run(`pub-${c.id}`, () => api(`/api/creatives/${c.id}/publish`, "POST"))}>
+              onClick={() => confirm(c.placement === "ad" ? "Create this ad (paused) in Ads Manager?" : "Publish to Meta now?") && run(`pub-${c.id}`, () => runJob(`/api/creatives/${c.id}/publish`, "POST"))}>
               {busy === `pub-${c.id}` ? "Sending to Meta…" : c.placement === "ad" ? "Create paused ad" : "Publish now"}
             </button>
           )}

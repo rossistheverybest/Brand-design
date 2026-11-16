@@ -1,11 +1,10 @@
 import { db, log } from "@/lib/db";
-import { renderCreative, type CreativeRecord, type SlideRecord } from "@/lib/generate";
+import type { CreativeRecord, SlideRecord } from "@/lib/generate";
 import { route } from "@/lib/http";
+import { startJob } from "@/lib/jobs-trigger";
 import { LAYOUTS } from "@/lib/render/templates";
 
-export const maxDuration = 120;
-
-/** Edit overlay text / layouts / copy, then re-render. */
+/** Edit overlay text / layouts / copy. Slide changes re-render in a background job. */
 export const PATCH = route<{ id: string }>(async (req, { id }, user) => {
   const body = (await req.json()) as { slides?: SlideRecord[]; copy?: Record<string, unknown> };
   const sb = db();
@@ -25,10 +24,10 @@ export const PATCH = route<{ id: string }>(async (req, { id }, user) => {
   if (c.placement === "ad" && body.slides?.[0]) slides[1] = { ...slides[1], layout: slides[0].layout, overlay: slides[0].overlay, photo_id: slides[0].photo_id };
 
   const updated = { ...c, slides, copy: { ...c.copy, ...(body.copy ?? {}) }, status: "draft" };
-  await sb.from("creatives").update({ copy: updated.copy, status: "draft" }).eq("id", id);
+  await sb.from("creatives").update({ copy: updated.copy, slides: updated.slides, status: "draft" }).eq("id", id);
   // An edit needs a fresh approval before anything publishes.
   await sb.from("calendar_items").update({ status: "generated" }).eq("id", c.item_id).eq("status", "approved");
   const textOnly = !body.slides;
-  if (!textOnly) await renderCreative(updated);
   await log("edited", { rerendered: !textOnly }, { item_id: c.item_id, creative_id: id }, user);
+  if (!textOnly) return startJob("rerender", { creativeId: id }, user);
 });

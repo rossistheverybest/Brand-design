@@ -1,4 +1,3 @@
-import "server-only";
 import { planCreatives, type Plan } from "./copy";
 import { db, download, getBrand, log, upload } from "./db";
 import { placementsFor, type Aspect, type Placement } from "./formats";
@@ -6,6 +5,7 @@ import { renderJpeg } from "./render";
 import { previewForModel } from "./render/photo";
 import type { LayoutId, Overlay } from "./render/templates";
 import { brandLogo, type Brand } from "./brand-assets";
+import { learningContext } from "./learning";
 
 export interface SlideRecord {
   photo_id: string | null;
@@ -28,7 +28,11 @@ export interface CreativeRecord {
 
 type PlanSlide = NonNullable<Plan["feed"]>["slides"][number];
 
-interface PhotoRow { id: string; storage_path: string; credit: string | null; analysis: { focal_x?: number; focal_y?: number } | null }
+interface PhotoRow {
+  id: string; storage_path: string; credit: string | null;
+  analysis: { focal_x?: number; focal_y?: number } | null;
+  story_variant_path?: string | null;
+}
 
 /**
  * Calendar item + its photos -> Claude plan -> rendered creatives in storage.
@@ -54,8 +58,10 @@ export async function generateForItem(itemId: string, actor: string, direction?:
   const monday = mondayOf(item.date);
   const { data: theme } = await sb.from("week_themes").select("theme, goal").eq("brand_id", item.brand_id).eq("week_start", monday).maybeSingle();
 
+  const learning = await learningContext(brand.id, item.pillar);
+
   const plan = await planCreatives({
-    brand, item, weekTheme: theme, placements, direction,
+    brand, item, weekTheme: theme, placements, direction, learning,
     photos: previews.map((p, i) => ({ ...p, credit: photoRows[i].credit })),
   });
 
@@ -89,7 +95,9 @@ export async function generateForItem(itemId: string, actor: string, direction?:
       copy: { primary_text: plan.ad.primary_text, headline: plan.ad.headline, description: plan.ad.description, cta: plan.ad.cta, link_url: item.link_url } });
   }
 
-  const { data: inserted, error: insErr } = await sb.from("creatives").insert(rows).select("*");
+  // Keep Claude's version untouched so later edits can be learned from.
+  const withOriginal = rows.map((r) => ({ ...r, original: snapshot(r) }));
+  const { data: inserted, error: insErr } = await sb.from("creatives").insert(withOriginal).select("*");
   if (insErr) throw insErr;
 
   const byId = new Map(photoRows.map((p, i) => [p.id, { row: p, buf: originals[i] }]));
@@ -124,9 +132,18 @@ export async function renderCreative(
       }
     }
     const a = photo?.row.analysis;
+    // Story-shaped renders use the AI-extended 9:16 version of the photo when one exists.
+    let buf = photo?.buf;
+    let focal = a?.focal_x != null ? { x: a.focal_x, y: a.focal_y! } : null;
+    if (photo && s.aspect === "9:16" && photo.row.story_variant_path) {
+      const key = `story:${photo.row.id}`;
+      if (!cache.has(key)) cache.set(key, { row: photo.row, buf: await download(photo.row.story_variant_path) });
+      buf = cache.get(key)!.buf;
+      focal = a?.focal_x != null ? { x: a.focal_x, y: 0.5 } : null;
+    }
     const jpg = await renderJpeg({
       kit: brand.kit, brandName: brand.name, aspect: s.aspect, layout: s.layout, overlay: s.overlay,
-      photo: photo?.buf, focal: a?.focal_x != null ? { x: a.focal_x, y: a.focal_y! } : null,
+      photo: buf, focal,
       logo, credit: photo?.row.credit ?? undefined,
       slide: c.placement === "feed" ? { index: i, count: c.slides.length } : undefined,
     });
@@ -136,6 +153,11 @@ export async function renderCreative(
   }
   await sb.from("creatives").update({ slides, updated_at: new Date().toISOString() }).eq("id", c.id);
   return slides;
+}
+
+/** The parts a reviewer can change: per-slide layout/photo/text and the copy. */
+export function snapshot(c: { slides: SlideRecord[]; copy: Record<string, unknown> }) {
+  return { slides: c.slides.map((s) => ({ layout: s.layout, photo_id: s.photo_id, overlay: s.overlay })), copy: c.copy };
 }
 
 function clean(o: { eyebrow: string | null; headline: string | null; body: string | null; cta: string | null }): Overlay {

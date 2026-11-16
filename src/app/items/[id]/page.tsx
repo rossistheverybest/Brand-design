@@ -25,6 +25,8 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
 
   const photoViews = await Promise.all((photos ?? []).map(async (p) => ({
     id: p.id as string, credit: p.credit as string | null, url: await signedUrl(p.storage_path, 3600),
+    width: p.width as number | null, height: p.height as number | null,
+    storyUrl: p.story_variant_path ? await signedUrl(p.story_variant_path, 3600) : null, storyAi: !!p.story_variant_ai,
     warnings: (p.analysis?.warnings ?? []) as string[], subject: p.analysis?.subject as string | undefined,
   })));
   const creativeViews = await Promise.all(((creatives ?? []) as (CreativeRecord & { meta_result: Record<string, unknown> | null })[]).map(async (c) => ({

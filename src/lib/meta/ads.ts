@@ -1,4 +1,3 @@
-import "server-only";
 import { graph } from "./graph";
 
 export interface AdInput {
