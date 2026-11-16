@@ -31,6 +31,23 @@ const items = ITEMS.map((i, n) => {
     title: i.t, flag: i.flag ?? null, status, creatives };
 });
 
+const inspirations = [
+  { id: "i1", brand_id: "altus", source: "upload", image_path: "inspiration/altus-overlay-4x5.jpg", permalink: null, account: null, caption: null,
+    note: "Love the huge headline sitting low over the photo with lots of sky", status: "kept", created_at: "2026-11-15T10:00:00Z", engagement: null,
+    analysis: { summary: "Big, low headline lets the landscape breathe and reads instantly.", closest_template: "overlay",
+      traits: [{ area: "layout", observation: "Headline occupies the bottom 30%, top 60% is untouched sky", how_to_apply: "Keep overlay text in the lower third and avoid eyebrow + body on covers" },
+               { area: "copy", observation: "Three-word headline, no body copy", how_to_apply: "Cap cover headlines at 3-4 words" }],
+      rule_ideas: ["Cover slides: headline only, 4 words max, no body text."], template_idea: null } },
+  { id: "i2", brand_id: "corvus", source: "instagram", image_path: "inspiration/corvus-band-4x5.jpg", permalink: "https://instagram.com/p/x", account: "examplesplitco", caption: "Dates + price on slide 2",
+    note: null, status: "new", created_at: "2026-11-16T10:00:00Z", engagement: { likes: 812, comments: 44, score: 3.2, format: "CAROUSEL_ALBUM" },
+    analysis: { summary: "Price tag in the corner turns an inspiration shot into an offer without clutter.", closest_template: "band",
+      traits: [{ area: "layout", observation: "Small rounded price tag top-right, 1/8 of the width", how_to_apply: "Add an optional corner tag for price or dates" }],
+      rule_ideas: [], template_idea: { title: "Corner tag", description: "Full-bleed photo with a small rounded tag (price or dates) in the top-right corner, 28px text, white on black." } } },
+];
+const watch = [{ id: 1, brand_id: "corvus", username: "examplesplitco", followers: 18400, last_synced: "2026-11-16T15:00:00Z", last_error: null },
+  { id: 2, brand_id: "altus", username: "someguideco", followers: null, last_synced: "2026-11-16T15:00:00Z", last_error: "Not a business account" }];
+const reports = [{ id: 1, brand_id: "corvus", summary: "Carousels that put dates and price on the second slide outperformed single images about 3x this week. Short, lower-case headlines did best.", findings: [{ finding: "Price on slide 2 wins", evidence: "3 of 4 standouts, 2.4-3.2x usual" }], template_ideas: [{ title: "Corner tag", description: "Small price/date tag in a corner of a full-bleed photo." }], post_ids: ["i2"], created_at: "2026-11-16T15:05:00Z" }];
+
 function filter(rows: Record<string, unknown>[], q: URLSearchParams) {
   return rows.filter((r) => [...q.entries()].every(([k, v]) => {
     if (["select", "order", "limit"].includes(k)) return true;
@@ -49,6 +66,9 @@ http.createServer((req, res) => {
   if (url.pathname === "/auth/v1/user") return json({ id: "u1", email: "demo@example.com", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01" });
   if (url.pathname === "/rest/v1/brands") return json(brands);
   if (url.pathname === "/rest/v1/calendar_items") return json(filter(items, url.searchParams));
+  if (url.pathname === "/rest/v1/inspirations") return json(inspirations);
+  if (url.pathname === "/rest/v1/watch_accounts") return json(watch);
+  if (url.pathname === "/rest/v1/trend_reports") return json(reports);
   if (url.pathname.startsWith("/rest/v1/")) return json([]);
   if (url.pathname === "/storage/v1/object/sign/media" && req.method === "POST") {
     let body = ""; req.on("data", (c) => (body += c)); req.on("end", () => {

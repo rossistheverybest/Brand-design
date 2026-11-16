@@ -55,7 +55,8 @@ src/lib/publishing.ts      approval-gated publish
 src/lib/jobs.ts            background jobs (generate, re-render, publish, touch-up, learn) + scheduler
 src/lib/learning.ts        feedback capture, history for prompts, rule suggestions
 src/lib/touchup.ts         OpenAI photo extension for stories
-netlify/functions/         background worker + 15-minute scheduler
+netlify/functions/         background worker, 15-minute publisher, Monday inspiration sync
+src/lib/inspiration.ts     screenshot analysis, Instagram watch list, weekly report
 src/app/                   calendar, item workspace, brand kits, API routes
 supabase/migrations/       schema (RLS on, server-only access)
 supabase/seed.sql          brands + the 92 items / 10 week themes from the calendar artifact
@@ -102,6 +103,19 @@ Claude isn't retrained. Instead, every review is recorded and fed back into the 
 - **Approved after edits**: Claude's version is kept next to yours, and the before → after changes ("headline: X → Y") are shown to Claude next time.
 - **Rejected**: you give a one-line reason, and Claude is told to avoid it.
 - **Suggested rules**: on the Brands page, "Suggest rules" reads the recent reviews and proposes house-style rules (e.g. "Keep on-image headlines to 5 words"). You edit, accept or dismiss each one. Accepted rules join the brand's hard rules. Nothing is added without you.
+
+## Inspiration board
+**Inspiration** (top nav) collects design ideas in two ways:
+
+- **Screenshots:** drop, paste or choose screenshots of posts or ads you like, and say what you like about them. Claude pulls out the transferable traits (layout, type, copy, photo), suggests rules, and names the closest existing template. If the look needs a layout you don't have, it drafts a **template request**.
+- **Watch list:** add Instagram **business or creator** accounts per business, such as competitors and brands you admire. Every Monday (or with **Sync now**), the official Business Discovery API pulls their recent posts. Each post is scored against that account's own normal engagement; the standouts are saved and analysed, and a **"What's working"** report is written. Rule ideas from the report go to the Brands page as suggestions. Personal accounts can't be read, and reach or saves aren't available for other accounts.
+
+What it feeds back:
+- Rules you add from a card go straight into that brand's rules (or every brand's, for "All businesses").
+- Copy and layout traits from inspiration you've **kept** are included in future generation requests as "styles the reviewer likes".
+- New visual layouts are never invented by the AI on the fly. They become template requests that get built properly in `src/lib/render/templates.tsx`, so every post stays consistent.
+
+Claude is instructed to borrow traits, never to copy another brand's photos, wording, logo or look. Images are stored privately for reference only.
 
 ## Photo touch-ups (OpenAI)
 On a wide photo, **Extend for stories (AI)** creates a 9:16 version by generating more sky and snow above and below it. The real photo is pasted back over the middle at full quality, so only the added bands are AI-made. That version is used only for story-shaped images, it's marked "AI-extended" in the workspace, and **Undo** returns to normal cropping. The prompt forbids adding people, skiers, text or objects. Look at it before approving. Meta may ask for an "AI info" label on ads that use edited images.

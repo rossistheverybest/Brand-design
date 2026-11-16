@@ -6,6 +6,7 @@ import { previewForModel } from "./render/photo";
 import type { LayoutId, Overlay } from "./render/templates";
 import { brandLogo, type Brand } from "./brand-assets";
 import { learningContext } from "./learning";
+import { likedTraits } from "./inspiration";
 
 export interface SlideRecord {
   photo_id: string | null;
@@ -58,7 +59,7 @@ export async function generateForItem(itemId: string, actor: string, direction?:
   const monday = mondayOf(item.date);
   const { data: theme } = await sb.from("week_themes").select("theme, goal").eq("brand_id", item.brand_id).eq("week_start", monday).maybeSingle();
 
-  const learning = await learningContext(brand.id, item.pillar);
+  const learning = [await learningContext(brand.id, item.pillar), await likedTraits(brand.id)].filter(Boolean).join("\n\n") || null;
 
   const plan = await planCreatives({
     brand, item, weekTheme: theme, placements, direction, learning,

@@ -8,9 +8,10 @@ import { generateForItem, renderCreative, type CreativeRecord } from "./generate
 import { suggestRules } from "./learning";
 import { publishCreative, zonedTime } from "./publishing";
 import { extendForStory } from "./touchup";
+import { analyzeInspiration, syncWatchList } from "./inspiration";
 import { getBrand } from "./db";
 
-export type JobType = "generate" | "rerender" | "publish" | "extend_photo" | "learn";
+export type JobType = "generate" | "rerender" | "publish" | "extend_photo" | "learn" | "analyze_inspiration" | "sync_inspiration";
 
 export async function enqueue(type: JobType, payload: Record<string, unknown>, actor: string) {
   const { data, error } = await db().from("jobs").insert({ type, payload, actor }).select("id").single();
@@ -28,6 +29,8 @@ const handlers: Record<JobType, (p: Record<string, string>, actor: string) => Pr
   publish: (p, actor) => publishCreative(p.creativeId, actor),
   extend_photo: (p, actor) => extendForStory(p.photoId, actor),
   learn: (p) => suggestRules(p.brandId),
+  analyze_inspiration: (p) => analyzeInspiration(p.inspirationId),
+  sync_inspiration: (p, actor) => syncWatchList(p.brandId, actor),
 };
 
 /** Claim and run one job. Safe to call twice: only the first claim runs it. */
@@ -80,4 +83,11 @@ export async function dispatch(id: string, runLocal: (fn: () => Promise<void>) =
   } else {
     runLocal(() => runJob(id));
   }
+}
+
+/** Weekly: queue a watch-list sync for every brand that watches accounts. */
+export async function enqueueInspirationSyncs(): Promise<string[]> {
+  const { data } = await db().from("watch_accounts").select("brand_id");
+  const brands = [...new Set((data ?? []).map((r) => r.brand_id as string))];
+  return Promise.all(brands.map((b) => enqueue("sync_inspiration", { brandId: b }, "scheduler")));
 }

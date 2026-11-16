@@ -5,7 +5,7 @@ export const browserClient = () =>
   createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 
 /** Upload a file straight to Storage through a signed upload URL from our API. */
-export async function uploadFile(file: File, prefix: "uploads" | "brand-assets"): Promise<string> {
+export async function uploadFile(file: File, prefix: "uploads" | "brand-assets" | "inspiration"): Promise<string> {
   const res = await fetch("/api/upload-url", { method: "POST", body: JSON.stringify({ filename: file.name, prefix }) });
   const { path, token, error } = await res.json();
   if (error) throw new Error(error);
