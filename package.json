@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "render:samples": "tsx scripts/render-samples.ts",
-    "import:calendar": "tsx scripts/import-calendar.ts"
+    "import:calendar": "tsx scripts/import-calendar.ts",
+    "preview:mock": "npm run render:samples && (npx tsx scripts/dev/mock-supabase.ts &) && next dev"
   },
   "engines": {
     "node": ">=20"

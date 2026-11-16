@@ -49,3 +49,14 @@ export async function signedUrl(path: string, seconds = 3600): Promise<string> {
 export async function log(action: string, detail: Record<string, unknown>, ids: { item_id?: string; creative_id?: string }, actor?: string) {
   await db().from("activity").insert({ action, detail, actor, ...ids });
 }
+
+/** Sign many paths in one request (calendar thumbnails). */
+export async function signedUrls(paths: string[], seconds = 600): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const unique = [...new Set(paths.filter(Boolean))];
+  if (!unique.length) return out;
+  const { data, error } = await db().storage.from(BUCKET).createSignedUrls(unique, seconds);
+  if (error) throw error;
+  for (const r of data ?? []) if (r.path && r.signedUrl) out.set(r.path, r.signedUrl);
+  return out;
+}

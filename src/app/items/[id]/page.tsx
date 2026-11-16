@@ -35,7 +35,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
   return (
     <main className="wrap">
       <header style={{ display: "grid", gap: 8 }}>
-        <Link href={`/?from=${item.date}`} className="k">← Calendar</Link>
+        <Link href={`/?view=week&date=${item.date}`} className="k">← Calendar</Link>
         <div className={`row b-${brand.id}`}>
           <span className="dot b" /><span className="k">{brand.name} · {item.date} · {item.kind}{item.pillar ? ` · ${item.pillar}` : ""}</span>
           <span className={`status ${item.status}`}>{item.status}</span>

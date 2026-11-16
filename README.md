@@ -90,8 +90,19 @@ All three brands are black and white. Logos come from `assets/logos/<brand>-whit
 5. Tweak the on-image text, layout or photo per slide (re-renders in a few seconds), or edit the caption.
 6. **Approve** each creative. Organic posts publish automatically on the date; use **Publish now** to post right away, and **Create paused ad** for ads.
 
+## Calendar views
+The calendar has **Month**, **Week** and **Day** views and a business switcher (**All / Altus / Corvus / Winterstoke**). Each view shows a per-business tally for the period:
+
+- **Posted**: live on Meta (filled dot)
+- **Scheduled**: approved, publishes automatically (green)
+- **In review**: drafts waiting for approval (ring)
+- **Planned**: on the calendar, nothing made yet (dashed)
+
+Month shows every item in a compact list (on a phone, only days with items). Week shows the creative thumbnail, time and status. Day shows every slide, story frame and caption, ready to review. Click a date to jump to that day.
+
 ## Useful commands
 ```bash
+npm run preview:mock                          # UI preview with the imported calendar and fake statuses (no Supabase); set .env.local to the mock values in scripts/dev/mock-supabase.ts
 npm run render:samples -- path/to/photo.jpg   # every layout × brand × size into ./samples (no keys needed)
 npm run import:calendar                       # rebuild supabase/seed.sql from data/artifact-calendar.ts
 npm run typecheck
