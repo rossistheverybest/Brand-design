@@ -2,7 +2,10 @@
   command = "npm run build"
   publish = ".next"
 
-[functions]
+# Settings for OUR functions only (netlify/functions/*). They are deliberately
+# not under a bare [functions] block: that would also apply to the server
+# function Netlify generates for the Next.js site and can break every page.
+[functions."worker-background"]
   node_bundler = "esbuild"
   # Native image libraries are installed, not bundled.
   external_node_modules = ["sharp", "@resvg/resvg-js"]
@@ -12,3 +15,11 @@
     "node_modules/@fontsource/source-sans-3/files/*-normal.woff",
     "assets/logos/*.png",
   ]
+
+[functions."publish-due"]
+  node_bundler = "esbuild"
+  external_node_modules = ["sharp", "@resvg/resvg-js"]
+
+[functions."inspiration-weekly"]
+  node_bundler = "esbuild"
+  external_node_modules = ["sharp", "@resvg/resvg-js"]
