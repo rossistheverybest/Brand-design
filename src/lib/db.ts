@@ -9,7 +9,9 @@ let admin: SupabaseClient | null = null;
 /** Server-side client with the secret key. Only call after requireUser(). */
 export function db(): SupabaseClient {
   if (!admin) {
-    admin = createClient(SUPABASE_URL, process.env.SUPABASE_SECRET_KEY!, {
+    const key = process.env.SUPABASE_SECRET_KEY;
+    if (!key) throw new Error("SUPABASE_SECRET_KEY is not set for this deploy. Add it in Netlify environment variables (Functions scope) and redeploy.");
+    admin = createClient(SUPABASE_URL, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }
