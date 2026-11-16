@@ -4,11 +4,17 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Keeps the Supabase session cookie fresh and sends signed-out visitors to /login.
 // The email allowlist itself is checked server-side in lib/auth.ts.
+// Paths that must never be redirected to /login. Checked here in code as well
+// as in `config.matcher`, because on Netlify the matcher was not applied: the
+// proxy ran on /login (redirect loop) and on /auth/callback (sign-in code lost).
+const PUBLIC = [/^\/login(\/|$)/, /^\/auth(\/|$)/, /^\/api\/cron(\/|$)/, /^\/_next\//, /^\/favicon\.ico$/, /^\/\.netlify\//];
+
 export async function proxy(request: NextRequest) {
-  // If Supabase lands the sign-in link on any page other than /auth/callback
-  // (e.g. the Site URL), hand the one-time code to the callback instead of
-  // dropping it on the way to /login.
-  const { searchParams } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+  if (PUBLIC.some((re) => re.test(pathname))) return NextResponse.next();
+
+  // If Supabase lands the sign-in link on any other page (e.g. the Site URL),
+  // hand the one-time code to the callback instead of dropping it.
   if (searchParams.get("code") || searchParams.get("error_description")) {
     const to = new URL("/auth/callback", request.url);
     searchParams.forEach((v, k) => to.searchParams.set(k, v));
