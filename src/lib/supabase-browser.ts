@@ -1,8 +1,9 @@
 "use client";
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./public-config";
 import { createBrowserClient } from "@supabase/ssr";
 
 export const browserClient = () =>
-  createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+  createBrowserClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 /** Upload a file straight to Storage through a signed upload URL from our API. */
 export async function uploadFile(file: File, prefix: "uploads" | "brand-assets" | "inspiration"): Promise<string> {

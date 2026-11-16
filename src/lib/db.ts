@@ -1,3 +1,4 @@
+import { SUPABASE_URL } from "./public-config";
 // Server code shared by Next route handlers and the background worker (netlify/functions).
 // Never import this from a client component: it uses the Supabase secret key.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -8,7 +9,7 @@ let admin: SupabaseClient | null = null;
 /** Server-side client with the secret key. Only call after requireUser(). */
 export function db(): SupabaseClient {
   if (!admin) {
-    admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
+    admin = createClient(SUPABASE_URL, process.env.SUPABASE_SECRET_KEY!, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }
