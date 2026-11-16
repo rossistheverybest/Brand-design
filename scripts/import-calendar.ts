@@ -42,8 +42,9 @@ for (const i of ITEMS) {
   const c = classify(i);
   const note = NOTES.find((n) => n.d === i.d && n.b === i.b && i.kind === "post" && (!n.titleIncludes || i.t.includes(n.titleIncludes)));
   const fact = FACTS.find((f) => f.b === i.b && f.match.test(i.t));
-  const brief = [fact?.brief, c.brief].filter(Boolean).join(" ") || null;
-  const flag = [i.flag, note?.flag].filter(Boolean).join(" ") || null;
+  // Event metadata repeats the fact text, and NOTES supersede the short artifact flags.
+  const brief = [fact?.brief, c.kind === "event" && fact ? null : c.brief].filter(Boolean).join(" ") || null;
+  const flag = note?.flag ?? i.flag ?? null;
   const status = i.cancel ? "cancelled" : "planned";
   sql += `insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, flag, status, source)
 select ${q(brand)}, ${q(i.d)}, ${q(c.kind)}, ${q(c.format)}, ${q(c.pillar)}, ${q(i.t)}, ${q(brief)}, ${q(flag)}, ${q(status)}, 'artifact-import'

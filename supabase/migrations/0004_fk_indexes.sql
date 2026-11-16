@@ -1,0 +1,10 @@
+-- Covering indexes for foreign keys (Supabase performance advisor).
+create index if not exists activity_creative_id_idx on activity (creative_id);
+create index if not exists activity_item_id_idx on activity (item_id);
+create index if not exists feedback_creative_id_idx on feedback (creative_id);
+create index if not exists feedback_item_id_idx on feedback (item_id);
+create index if not exists photos_brand_id_idx on photos (brand_id);
+create index if not exists rule_suggestions_brand_id_idx on rule_suggestions (brand_id);
+create index if not exists template_requests_brand_id_idx on template_requests (brand_id);
+create index if not exists trend_reports_brand_id_idx on trend_reports (brand_id);
+create index if not exists week_themes_brand_id_idx on week_themes (brand_id);

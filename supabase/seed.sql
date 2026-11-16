@@ -34,10 +34,10 @@ insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, 
 select 'corvus', '2026-11-06', 'post', 'single', null, 'AST 1 for Splitboarders: taught on a board.', 'AST 1 for Splitboarders: Dec 11–12 (also Jan 9–10). $359 + GST. Planned photo: snow-pit. A version was already made outside Brand Studio.', null, 'planned', 'artifact-import'
 where not exists (select 1 from calendar_items where brand_id = 'corvus' and date = '2026-11-06' and title = 'AST 1 for Splitboarders: taught on a board.');
 insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, flag, status, source)
-select 'winterstoke', '2026-11-07', 'event', 'none', null, 'Backcountry mini sessions, Squamish', 'Backcountry mini sessions in Squamish, Sat Nov 7. Crevasse rescue 12–2 with Ross. Crevasse rescue 12–2 · Ross', null, 'planned', 'artifact-import'
+select 'winterstoke', '2026-11-07', 'event', 'none', null, 'Backcountry mini sessions, Squamish', 'Backcountry mini sessions in Squamish, Sat Nov 7. Crevasse rescue 12–2 with Ross.', null, 'planned', 'artifact-import'
 where not exists (select 1 from calendar_items where brand_id = 'winterstoke' and date = '2026-11-07' and title = 'Backcountry mini sessions, Squamish');
 insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, flag, status, source)
-select 'winterstoke', '2026-11-08', 'event', 'none', null, 'Gear swap + skills stack', 'Gear swap + skills stack at The Wallace, Sun Nov 8, 1–9 pm, $20. The Wallace · 1–9 pm · $20', null, 'planned', 'artifact-import'
+select 'winterstoke', '2026-11-08', 'event', 'none', null, 'Gear swap + skills stack', 'Gear swap + skills stack at The Wallace, Sun Nov 8, 1–9 pm, $20.', null, 'planned', 'artifact-import'
 where not exists (select 1 from calendar_items where brand_id = 'winterstoke' and date = '2026-11-08' and title = 'Gear swap + skills stack');
 insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, flag, status, source)
 select 'corvus', '2026-11-09', 'post', 'single', 'Inspiration', 'Inspiration', 'Planned photo: Rome-board slash.', null, 'planned', 'artifact-import'
@@ -55,7 +55,7 @@ insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, 
 select 'corvus', '2026-11-18', 'post', 'carousel', null, 'Build Your Own Course: pick your course (6-slide carousel)', 'Build Your Own Course: private, any dates, quoted per plan. A version was already made outside Brand Studio.', null, 'planned', 'artifact-import'
 where not exists (select 1 from calendar_items where brand_id = 'corvus' and date = '2026-11-18' and title = 'Build Your Own Course: pick your course (6-slide carousel)');
 insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, flag, status, source)
-select 'corvus', '2026-11-20', 'post', 'carousel', null, 'Hakuba details (5-slide carousel)', 'Hakuba, Japan splitboard trip: Jan 20–24, 2027. $3,749 + GST. Max 6 riders. With Hayden Buck. A version was already made outside Brand Studio.', 'Cover needs a Japan photo Cover is a placeholder (not Japan, rider not confirmed as a boarder). Needs a Japan photo.', 'planned', 'artifact-import'
+select 'corvus', '2026-11-20', 'post', 'carousel', null, 'Hakuba details (5-slide carousel)', 'Hakuba, Japan splitboard trip: Jan 20–24, 2027. $3,749 + GST. Max 6 riders. With Hayden Buck. A version was already made outside Brand Studio.', 'Cover is a placeholder (not Japan, rider not confirmed as a boarder). Needs a Japan photo.', 'planned', 'artifact-import'
 where not exists (select 1 from calendar_items where brand_id = 'corvus' and date = '2026-11-20' and title = 'Hakuba details (5-slide carousel)');
 insert into calendar_items (brand_id, date, kind, format, pillar, title, brief, flag, status, source)
 select 'corvus', '2026-11-25', 'post', 'single', null, 'Spearhead Traverse', 'Spearhead Traverse: Apr 9–11 (also Apr 16–18). $925. Planned photo: blue-sky bowl.', null, 'planned', 'artifact-import'

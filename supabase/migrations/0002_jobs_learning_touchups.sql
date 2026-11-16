@@ -21,11 +21,16 @@ alter table jobs enable row level security;
 
 -- Atomically claim a queued job (two workers can never run the same job).
 create or replace function claim_job(job_id uuid) returns setof jobs
-language sql as $$
+language sql
+set search_path = public
+as $$
   update jobs set status = 'running', attempts = attempts + 1, updated_at = now()
   where id = job_id and status = 'queued'
   returning *;
 $$;
+-- Only the server (secret key) may claim jobs.
+revoke execute on function claim_job(uuid) from public, anon, authenticated;
+grant execute on function claim_job(uuid) to service_role;
 
 -- ---------- Learning ----------
 -- What Claude produced, kept untouched so edits can be compared with it.
