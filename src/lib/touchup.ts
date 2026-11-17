@@ -7,7 +7,25 @@ import OpenAI, { toFile } from "openai";
 import sharp from "sharp";
 import { db, download, getBrand, log, upload } from "./db";
 
-const MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
+/**
+ * Image model: OPENAI_IMAGE_MODEL if set, otherwise the newest "gpt-image" model
+ * this OpenAI account can use (names change as models are released and retired).
+ */
+async function imageModel(openai: OpenAI): Promise<string> {
+  if (process.env.OPENAI_IMAGE_MODEL) return process.env.OPENAI_IMAGE_MODEL;
+  const ids: string[] = [];
+  for await (const m of openai.models.list()) if (/^gpt-image/i.test(m.id)) ids.push(m.id);
+  if (!ids.length) {
+    throw new Error("This OpenAI account has no image models available. In platform.openai.com → Settings → Organization, complete organization verification (required for image models), then try again.");
+  }
+  // Prefer full (non-mini) models, then the highest version / newest dated id.
+  const rank = (id: string) => [/mini/i.test(id) ? 0 : 1, parseFloat(id.match(/gpt-image-(\d+(?:\.\d+)?)/i)?.[1] ?? "0"), id] as const;
+  ids.sort((a, b) => {
+    const [ma, va, ia] = rank(a), [mb, vb, ib] = rank(b);
+    return mb - ma || vb - va || ib.localeCompare(ia);
+  });
+  return ids[0];
+}
 const W = 1024, H = 1536;           // closest portrait size the image model supports (2:3)
 const OUT_W = 1080, OUT_H = 1920;   // story size
 
@@ -43,8 +61,9 @@ export async function extendForStory(photoId: string, actor: string) {
   // Always talk to OpenAI directly: an OPENAI_BASE_URL pointing at another
   // gateway (e.g. OpenRouter) has no /images/edits endpoint.
   const openai = new OpenAI({ apiKey: key, baseURL: "https://api.openai.com/v1" });
+  const model = await imageModel(openai);
   const res = await openai.images.edit({
-    model: MODEL,
+    model,
     // Keep the upload small (some gateways cap request bodies at ~4.5 MB):
     // WebP keeps transparency at a fraction of PNG's size, and the mask is a
     // flat two-tone PNG.
@@ -70,7 +89,7 @@ export async function extendForStory(photoId: string, actor: string) {
   const path = photo.storage_path.replace(/^uploads\//, "uploads/story-variants/").replace(/\.\w+$/, `-${Date.now()}.jpg`);
   await upload(path, story);
   await sb.from("photos").update({ story_variant_path: path, story_variant_ai: true }).eq("id", photoId);
-  await log("photo_extended_ai", { photoId, model: MODEL }, { item_id: photo.item_id }, actor);
+  await log("photo_extended_ai", { photoId, model }, { item_id: photo.item_id }, actor);
   return { story_variant_path: path };
 }
 
