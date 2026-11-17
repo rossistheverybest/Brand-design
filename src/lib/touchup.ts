@@ -17,7 +17,11 @@ const PROMPT =
   "Do not add people, animals, skiers, text, logos, buildings or new objects. Keep it natural and understated.";
 
 export async function extendForStory(photoId: string, actor: string) {
-  if (!process.env.OPENAI_API_KEY) throw new Error("Photo touch-ups need an OpenAI API key (OPENAI_API_KEY).");
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error("Photo touch-ups need an OpenAI API key (OPENAI_API_KEY in Netlify).");
+  if (key.startsWith("sk-or-")) {
+    throw new Error("OPENAI_API_KEY is an OpenRouter key. Image editing needs a key from platform.openai.com (OpenRouter has no image-edit endpoint).");
+  }
   const sb = db();
   const { data: photo } = await sb.from("photos").select("*").eq("id", photoId).single();
   if (!photo) throw new Error("Photo not found");
@@ -36,7 +40,9 @@ export async function extendForStory(photoId: string, actor: string) {
   const canvas = await sharp({ create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: placed, top, left: 0 }]).png().toBuffer();
 
-  const openai = new OpenAI();
+  // Always talk to OpenAI directly: an OPENAI_BASE_URL pointing at another
+  // gateway (e.g. OpenRouter) has no /images/edits endpoint.
+  const openai = new OpenAI({ apiKey: key, baseURL: "https://api.openai.com/v1" });
   const res = await openai.images.edit({
     model: MODEL,
     // Keep the upload small (some gateways cap request bodies at ~4.5 MB):
