@@ -27,6 +27,7 @@ export function Workspace(props: {
   const [over, setOver] = useState(false);
   const [credit, setCredit] = useState("");
   const [direction, setDirection] = useState("");
+  const [includeAd, setIncludeAd] = useState(props.kind === "ad");
   const fileRef = useRef<HTMLInputElement>(null);
   const visual = ["post", "story", "ad", "event"].includes(props.kind);
 
@@ -95,8 +96,12 @@ export function Workspace(props: {
           </div>
         )}
         <label>Direction for Claude (optional): “use the summit shot as the cover”, “make it a 5-slide carousel”<input value={direction} onChange={(e) => setDirection(e.target.value)} /></label>
+        <label className="row" style={{ display: "flex", color: "var(--fg)" }}>
+          <input type="checkbox" checked={includeAd || /\b(ad|ads|add|advert)\b/i.test(direction)} onChange={(e) => setIncludeAd(e.target.checked)} style={{ width: "auto" }} />
+          Also make a paid ad (feed 4:5 + story 9:16, with ad copy)
+        </label>
         <div className="row">
-          <button className="primary" disabled={!!busy || !props.photos.length} onClick={() => run("gen", () => runJob(`/api/items/${props.itemId}/generate`, "POST", { direction }))}>
+          <button className="primary" disabled={!!busy || !props.photos.length} onClick={() => run("gen", () => runJob(`/api/items/${props.itemId}/generate`, "POST", { direction, includeAd: includeAd || /\b(ad|ads|add|advert)\b/i.test(direction) }))}>
             {busy === "gen" ? "Designing… (up to a minute)" : props.creatives.length ? "Regenerate drafts" : "Generate"}
           </button>
           {props.creatives.length > 0 && <span className="muted" style={{ fontSize: 13 }}>Regenerating replaces drafts only. Approved and published creatives stay. Your past edits and rejections are taken into account.</span>}

@@ -103,7 +103,7 @@ export async function planCreatives(input: PlanInput): Promise<Plan> {
     item.link_url ? `Link: ${item.link_url}` : null,
     item.flag ? `Open flag on the calendar: ${item.flag}` : null,
     input.weekTheme ? `This week's theme: ${input.weekTheme.theme}${input.weekTheme.goal ? ` (goal: ${input.weekTheme.goal})` : ""}` : null,
-    `Make: ${placements.join(", ")}. Return null for anything not listed.`,
+    `Make: ${placements.join(", ")}. You must return every one of these; return null only for placements not listed. Reviewer direction changes the content, never which placements are made.`,
     item.format === "carousel" ? "The feed post is a carousel." : "The feed post is a single image unless the brief asks for a carousel.",
     input.learning ? `\n${input.learning}\n` : null,
     input.direction ? `Reviewer direction for this version (overrides the history above): ${input.direction}` : null,

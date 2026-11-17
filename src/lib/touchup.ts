@@ -39,8 +39,11 @@ export async function extendForStory(photoId: string, actor: string) {
   const openai = new OpenAI();
   const res = await openai.images.edit({
     model: MODEL,
-    image: await toFile(canvas, "photo.png", { type: "image/png" }),
-    mask: await toFile(canvas, "mask.png", { type: "image/png" }), // transparent pixels = fill these
+    // Keep the upload small (some gateways cap request bodies at ~4.5 MB):
+    // WebP keeps transparency at a fraction of PNG's size, and the mask is a
+    // flat two-tone PNG.
+    image: await toFile(await sharp(canvas).webp({ quality: 90, alphaQuality: 100 }).toBuffer(), "photo.webp", { type: "image/webp" }),
+    mask: await toFile(await maskFor(top, ph), "mask.png", { type: "image/png" }), // transparent pixels = fill these
     prompt: PROMPT,
     size: `${W}x${H}`,
     n: 1,
@@ -63,6 +66,13 @@ export async function extendForStory(photoId: string, actor: string) {
   await sb.from("photos").update({ story_variant_path: path, story_variant_ai: true }).eq("id", photoId);
   await log("photo_extended_ai", { photoId, model: MODEL }, { item_id: photo.item_id }, actor);
   return { story_variant_path: path };
+}
+
+/** Opaque where the real photo sits, transparent where the model should paint. */
+async function maskFor(top: number, ph: number) {
+  const band = await sharp({ create: { width: W, height: ph, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } } }).png().toBuffer();
+  return sharp({ create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: band, top, left: 0 }]).png({ compressionLevel: 9 }).toBuffer();
 }
 
 export async function removeStoryVariant(photoId: string) {

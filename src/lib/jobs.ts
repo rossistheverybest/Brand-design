@@ -20,7 +20,7 @@ export async function enqueue(type: JobType, payload: Record<string, unknown>, a
 }
 
 const handlers: Record<JobType, (p: Record<string, string>, actor: string) => Promise<unknown>> = {
-  generate: async (p, actor) => ({ review_notes: (await generateForItem(p.itemId, actor, p.direction)).review_notes }),
+  generate: async (p, actor) => ({ review_notes: (await generateForItem(p.itemId, actor, p.direction, String(p.includeAd) === "true")).review_notes }),
   rerender: async (p) => {
     const { data } = await db().from("creatives").select("*").eq("id", p.creativeId).single();
     await renderCreative(data as CreativeRecord);
