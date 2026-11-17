@@ -39,7 +39,7 @@ interface PhotoRow {
  * Calendar item + its photos -> Claude plan -> rendered creatives in storage.
  * Replaces any existing draft creatives for the item (approved/published ones are kept).
  */
-export async function generateForItem(itemId: string, actor: string, direction?: string | null) {
+export async function generateForItem(itemId: string, actor: string, direction?: string | null, includeAd = false) {
   const sb = db();
   const { data: item, error } = await sb.from("calendar_items").select("*").eq("id", itemId).single();
   if (error) throw error;
@@ -51,7 +51,7 @@ export async function generateForItem(itemId: string, actor: string, direction?:
 
   const placements = placementsFor(item.kind, item.format);
   if (!placements.length) throw new Error(`Nothing to generate for a ${item.kind} item.`);
-  if (item.ad_set_id && !placements.includes("ad")) placements.push("ad");
+  if ((item.ad_set_id || includeAd) && !placements.includes("ad")) placements.push("ad");
 
   const originals = await Promise.all(photoRows.map((p) => download(p.storage_path)));
   const previews = await Promise.all(originals.map(previewForModel));
@@ -94,6 +94,10 @@ export async function generateForItem(itemId: string, actor: string, direction?:
     rows.push({ item_id: itemId, placement: "ad", variant: 1, layout: base.layout,
       slides: [base, { ...base, aspect: "9:16" }],
       copy: { primary_text: plan.ad.primary_text, headline: plan.ad.headline, description: plan.ad.description, cta: plan.ad.cta, link_url: item.link_url } });
+  }
+
+  if (!rows.length) {
+    throw new Error(`Claude returned nothing for ${placements.join(" + ")}.${plan.review_notes.length ? ` Its note: ${plan.review_notes.join(" ")}` : ""} Try again, or adjust the direction.`);
   }
 
   // Keep Claude's version untouched so later edits can be learned from.
