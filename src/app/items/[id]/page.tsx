@@ -62,6 +62,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
           itemId={id}
           kind={item.kind}
           format={item.format}
+          allowAiImages={brand.kit.allowAiImages !== false}
           reviewNotes={item.review_notes ?? []}
           photos={photoViews}
           creatives={creativeViews}

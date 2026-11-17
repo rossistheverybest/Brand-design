@@ -18,7 +18,7 @@ const LAYOUTS = ["overlay", "band", "minimal", "endcard"];
 const LABEL: Record<string, string> = { feed: "Feed post", story: "Story", ad: "Paid ad (feed 4:5 + story 9:16)" };
 
 export function Workspace(props: {
-  itemId: string; kind: string; format: string; reviewNotes: string[];
+  itemId: string; kind: string; format: string; reviewNotes: string[]; allowAiImages: boolean;
   photos: PhotoView[]; creatives: CreativeView[]; adReady: boolean;
 }) {
   const router = useRouter();
@@ -82,7 +82,7 @@ export function Workspace(props: {
                     <span className="aibadge" title="Top and bottom were extended with AI; the middle is the real photo.">AI-extended for stories</span>
                     <button style={{ padding: "2px 8px" }} disabled={!!busy} onClick={() => run("undo-ext", () => api(`/api/photos/${p.id}/extend`, "DELETE"))}>Undo</button>
                   </span>
-                ) : p.width && p.height && p.width / p.height > 0.6 ? (
+                ) : props.allowAiImages && p.width && p.height && p.width / p.height > 0.6 ? (
                   <button style={{ justifySelf: "start", padding: "2px 10px" }} disabled={!!busy}
                     title="Uses AI to extend the sky and snow above and below this photo so stories show the whole shot instead of a tight crop. You approve the result like everything else."
                     onClick={() => run(`ext-${p.id}`, () => runJob(`/api/photos/${p.id}/extend`, "POST"))}>
