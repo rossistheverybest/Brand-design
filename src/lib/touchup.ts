@@ -5,7 +5,7 @@
 // variant and marked as AI-edited; the original is never changed.
 import OpenAI, { toFile } from "openai";
 import sharp from "sharp";
-import { db, download, log, upload } from "./db";
+import { db, download, getBrand, log, upload } from "./db";
 
 const MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
 const W = 1024, H = 1536;           // closest portrait size the image model supports (2:3)
@@ -21,6 +21,9 @@ export async function extendForStory(photoId: string, actor: string) {
   const sb = db();
   const { data: photo } = await sb.from("photos").select("*").eq("id", photoId).single();
   if (!photo) throw new Error("Photo not found");
+  if (photo.brand_id && (await getBrand(photo.brand_id)).kit.allowAiImages === false) {
+    throw new Error("This business doesn't allow AI-edited images. Use a taller photo for stories instead.");
+  }
   const original = await sharp(await download(photo.storage_path), { failOn: "none" }).rotate().toBuffer();
   const meta = await sharp(original).metadata();
   const ratio = meta.width! / meta.height!;

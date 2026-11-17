@@ -29,6 +29,8 @@ export interface BrandKit {
   /** Local time (HH:MM) items publish when no publish_at is set. */
   defaultPublishTime: string;
   timezone: string;
+  /** false = never use AI to generate or edit images for this brand (disables touch-ups). */
+  allowAiImages?: boolean;
 }
 
 export interface BrandMeta {
@@ -106,6 +108,30 @@ export const DEFAULT_KITS: Record<string, { name: string; kit: BrandKit }> = {
       hashtags: ["#corvussnowboarding", "#splitboarding", "#splitboard", "#backcountrysnowboarding"],
       handle: "@corvussnowboarding",
       website: "https://corvussnowboarding.com",
+      defaultCta: "BOOK_TRAVEL",
+    },
+  },
+  phantom: {
+    name: "Phantom Heli",
+    kit: {
+      ...shared,
+      defaultPublishTime: "18:30",
+      allowAiImages: false,
+      colors: { primary: "#111111", accent: "#ffffff", ink: "#111111", paper: "#ffffff", overlay: "#000000" },
+      voice:
+        "Heli-skiing operator based in Squamish, BC, 25 minutes from Whistler (Sea to Sky). Confident, calm and precise. Sell the terrain and getting the right day; the safety margin is a reason to trust us, never a scare. Short sentences, concrete numbers from the brief.",
+      rules: [
+        "Every post is approved by Ross before it goes out.",
+        "No AI-generated or AI-edited images. Real photos only.",
+        "Write \"Weather Window\" in full, capitalised. Never \"Weather Window Guarantee\" and never just \"window\".",
+        "Weather Window posts lead with getting the right day, not with what happens if the weather is bad.",
+        "Use only facts, prices and numbers that are in the brief; never invent them.",
+        "Never name a guide or show a recognisable guest unless consent is confirmed in the brief.",
+        "Credit the photographer when a credit is given.",
+      ],
+      hashtags: ["#phantomheli", "#heliskiing", "#squamish", "#seatosky"],
+      handle: "@phantom.heli",
+      website: "https://phantomheli.com",
       defaultCta: "BOOK_TRAVEL",
     },
   },
