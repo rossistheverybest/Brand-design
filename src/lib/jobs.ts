@@ -43,7 +43,11 @@ export async function runJob(id: string) {
     const result = await handlers[job.type as JobType](job.payload, job.actor ?? "system");
     await sb.from("jobs").update({ status: "done", result: result ?? {}, updated_at: new Date().toISOString() }).eq("id", id);
   } catch (e) {
-    const message = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
+    const raw = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
+    // Some services answer errors with a whole HTML page; keep the message readable.
+    const message = /<html|<!doctype/i.test(raw)
+      ? `${raw.split("<")[0].trim() || "The service returned an error page"} (HTML error page from the service, not shown).`
+      : raw.slice(0, 600);
     console.error(`job ${id} (${job.type}) failed:`, e);
     await sb.from("jobs").update({ status: "failed", error: message, updated_at: new Date().toISOString() }).eq("id", id);
   }
