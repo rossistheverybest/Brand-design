@@ -54,7 +54,7 @@ export default function Login() {
       {(state === "sent" || state === "verifying" || (showError && email)) && (
         <form onSubmit={verify} className="card">
           <p style={{ margin: 0 }}>Check your email. Click the link, <b>or</b> type the 6-digit code here. It can take a minute; check spam too.</p>
-          <label>Code<input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,10}" value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" /></label>
+          <label>Code<input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="123456" /></label>
           <button className="primary" disabled={state === "verifying" || code.trim().length < 6}>{state === "verifying" ? "Signing in…" : "Sign in with code"}</button>
           <button type="button" onClick={() => { setCode(""); setState("idle"); }}>Use a different email</button>
         </form>
